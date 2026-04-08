@@ -22,6 +22,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
+#include "key.h"
 #include "led.h"
 #include "sdio_sd.h"
 #include "stm32f4xx.h"
@@ -34,6 +35,141 @@
 #include "usart.h"
 #include <stdint.h>
 #include <stdio.h>
+
+/* Private variables ---------------------------------------------------------*/
+volatile uint8_t Key_Pressed_Flag_0 = 0; // 按键1按下标志
+volatile uint8_t Key_Pressed_Flag_1 = 0; // 按键2按下标志
+volatile uint8_t Key_Pressed_Flag_2 = 0; // 按键3按下标志
+volatile uint8_t Key_Pressed_Flag_3 = 0; // 按键4按下标志
+
+/**
+ * @brief  This function handles EXTI Line0 interrupts request.
+ * @param  None
+ * @retval None
+ */
+void EXTI0_IRQHandler(void) {
+  // 检查是否是EXTI Line0中断（PC0按键）
+  if (EXTI_GetITStatus(EXTI_Line0) != RESET) {
+    // 清除中断标志位
+    EXTI_ClearITPendingBit(EXTI_Line0);
+
+    // 设置按键标志位，在主循环中处理
+    Key_Pressed_Flag_0 = 1;
+  }
+}
+
+void EXTI1_IRQHandler(void) {
+  // 检查是否是EXTI Line0中断（PC0按键）
+  if (EXTI_GetITStatus(EXTI_Line1) != RESET) {
+    // 清除中断标志位
+    EXTI_ClearITPendingBit(EXTI_Line1);
+
+    // 设置按键标志位，在主循环中处理
+    Key_Pressed_Flag_1 = 1;
+  }
+}
+
+void EXTI2_IRQHandler(void) {
+  // 检查是否是EXTI Line0中断（PC0按键）
+  if (EXTI_GetITStatus(EXTI_Line2) != RESET) {
+    // 清除中断标志位
+    EXTI_ClearITPendingBit(EXTI_Line2);
+
+    // 设置按键标志位，在主循环中处理
+    Key_Pressed_Flag_2 = 1;
+  }
+}
+
+void EXTI3_IRQHandler(void) {
+  // 检查是否是EXTI Line0中断（PC0按键）
+  if (EXTI_GetITStatus(EXTI_Line3) != RESET) {
+    // 清除中断标志位
+    EXTI_ClearITPendingBit(EXTI_Line3);
+
+    // 设置按键标志位，在主循环中处理
+    Key_Pressed_Flag_3 = 1;
+  }
+}
+/**
+ * @brief  初始化按键中断
+ * @param  None
+ * @retval None
+ */
+void KEY_Interrupt_Init(void) {
+  EXTI_InitTypeDef EXTI_InitStructure;
+  NVIC_InitTypeDef NVIC_InitStructure;
+
+  // 使能SYSCFG时钟
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+
+  // 连接EXTI Line0到PC0引脚
+  SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOC, EXTI_PinSource0);
+
+  // 连接EXTI Line2到PC2引脚
+  SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOC, EXTI_PinSource2);
+
+  // 连接EXTI Line3到PC3引脚
+  SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOC, EXTI_PinSource3);
+
+  // 连接EXTI Line4到PC4引脚
+  SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOC, EXTI_PinSource4);
+
+  // 配置EXTI Line0
+  EXTI_InitStructure.EXTI_Line = EXTI_Line0;
+  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling; // 下降沿触发
+  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+  EXTI_Init(&EXTI_InitStructure);
+
+  // 配置EXTI Line2
+  EXTI_InitStructure.EXTI_Line = EXTI_Line2;
+  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling; // 下降沿触发
+  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+  EXTI_Init(&EXTI_InitStructure);
+
+  // 配置EXTI Line3
+  EXTI_InitStructure.EXTI_Line = EXTI_Line3;
+  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling; // 下降沿触发
+  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+  EXTI_Init(&EXTI_InitStructure);
+
+  // 配置EXTI Line4
+  EXTI_InitStructure.EXTI_Line = EXTI_Line4;
+  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling; // 下降沿触发
+  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+  EXTI_Init(&EXTI_InitStructure);
+
+  // 配置NVIC for EXTI0
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+
+  // 配置NVIC for EXTI2
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI2_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+
+  // 配置NVIC for EXTI3
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI3_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+
+  // 配置NVIC for EXTI4
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI4_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+}
 
 /** @addtogroup Template_Project
  * @{
@@ -234,7 +370,6 @@ void SysTick_Handler(void) { Task_Handler(); }
  * @param  None
  * @retval None
  */
-void EXTI2_IRQHandler(void) {}
 
 /**
  * @brief  This function handles K2 key interrupt request (PD0).
